@@ -21,13 +21,6 @@ COLS_TO_CUBE = [
 ]
 
 
-def func(x):
-    try:
-        return int(x)
-    except:
-        return x
-
-
 def cube_sum(df: DataFrame, cols: List[str]) -> DataFrame:
     """ Computes a cube for the specified columns.
     :param df: the data frame
