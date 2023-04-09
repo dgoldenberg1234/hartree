@@ -1,0 +1,13 @@
+.DS_Store
+target
+venv
+.idea
+*.pyc
+*.csv
+*.zip
+*.gz
+.cache/
+.ipynb_checkpoints/
+**/__pycache__
+.coverage
+.vscode
