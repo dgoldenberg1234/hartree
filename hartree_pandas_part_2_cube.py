@@ -11,27 +11,29 @@ from hartree_common import (
 )
 from hartree_common import load_df, set_df_debug
 
-INPUT_FILE_PATH = "output/part_1_result.csv"
-OUTPUT_FILE_PATH = "output/part_2_result_cube.csv"
+INPUT_FILE_PATH = "pandas_output/part_1_result.csv"
+OUTPUT_FILE_PATH = "pandas_output/part_2_result_cube.csv"
 EXPECTED_RESULTS_FILE_PATH = "expected/expected_part_2_result_cube.csv"
 
+# The tier is not relevant because it is set to the given { legal_entity, counter_party } pair.
 COLS_TO_CUBE = [
     COL_LEGAL_ENTITY,
     COL_COUNTER_PARTY,
 ]
 
 
-def cube_sum(df: DataFrame, cols: List[str]) -> DataFrame:
-    """ Computes a cube for the specified columns.
-    :param df: the data frame
+def cube_sum(df_in: DataFrame, cols: List[str]) -> DataFrame:
+    """ Computes a cube for the specified columns. See
+    https://stackoverflow.com/questions/70956074/does-python-have-a-similar-function-to-cube-function-in-sql
+    :param df_in: the data frame
     :param cols: the columns
     :return: the resulting dataframe
     """
     dfs = []
     for n in range(len(cols), 0, -1):
         for subset in combinations(cols, n):
-            dfs.append(df.groupby(list(subset)).sum().astype(int).reset_index())
-    dfs.append(df.drop(cols, axis=1).sum().to_frame().T)
+            dfs.append(df_in.groupby(list(subset)).sum().astype(int).reset_index())
+    dfs.append(df_in.drop(cols, axis=1).sum().to_frame().T)
     return pd.concat(dfs)
 
 
@@ -46,6 +48,8 @@ def persist_results(df_in: DataFrame) -> None:
 
 
 if __name__ == "__main__":
+    """ This generates the output CSV file which contains the 'cube' for legal_entity/counter_party/tier.
+    """
     set_df_debug()
 
     df = load_df(INPUT_FILE_PATH)
@@ -60,6 +64,6 @@ if __name__ == "__main__":
     print(">> Saved results to {}".format(OUTPUT_FILE_PATH))
 
     # TODO DG: convert to a unit test using unittest.TestCase
-    validate(EXPECTED_RESULTS_FILE_PATH, EXPECTED_RESULTS_FILE_PATH)
+    validate(EXPECTED_RESULTS_FILE_PATH, OUTPUT_FILE_PATH)
 
     print(">> Done.")

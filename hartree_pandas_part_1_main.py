@@ -7,25 +7,24 @@ from hartree_common import (
     COL_TIER_X,
     COL_TIER_Y,
     COL_VALUE,
-    COL_VALUE_FOR_ACCR,
-    COL_VALUE_FOR_ARAP,
+    COL_ACCR_VALUE_SUMS,
+    COL_ARAP_VALUE_SUMS,
     COL_RATING,
     COL_STATUS,
     COL_MAX_RATING_BY_COUNTERPARTY,
+    STATUS_ACCR,
+    STATUS_ARAP,
     validate
 )
 from hartree_common import load_dataset
 
-OUTPUT_COL_ORDER = [COL_LEGAL_ENTITY, COL_COUNTER_PARTY, COL_TIER, COL_MAX_RATING_BY_COUNTERPARTY, COL_VALUE_FOR_ARAP,
-                    COL_VALUE_FOR_ACCR]
-
-STATUS_ACCR = "ACCR"
-STATUS_ARAP = "ARAP"
+OUTPUT_COL_ORDER = [COL_LEGAL_ENTITY, COL_COUNTER_PARTY, COL_TIER, COL_MAX_RATING_BY_COUNTERPARTY, COL_ARAP_VALUE_SUMS,
+                    COL_ACCR_VALUE_SUMS]
 
 # TODO DG: these can be externalized e.g. passed in from the command line
 INPUT_FILE_1_PATH = "input/dataset1.csv"
 INPUT_FILE_2_PATH = "input/dataset2.csv"
-OUTPUT_FILE_PATH = "output/part_1_result.csv"
+OUTPUT_FILE_PATH = "pandas_output/part_1_result.csv"
 
 EXPECTED_RESULTS_FILE_PATH = "expected/expected_part_1_result.csv"
 
@@ -57,6 +56,7 @@ def perform_transformations(df_input: DataFrame) -> DataFrame:
     # TODO DG:
     # I have two versions of this: one is a bit heavy on groupby's, the other a bit heavy on joins.
     # There may be a way to streamline this using a better aggregation approach in Pandas.
+    # Otherwise, I'd run a performance test over a larger dataset and pick the faster solution.
     #
 
     return do_transform_2(df_rating, df_input) if USE_IMPL_2 else do_transform(df_rating, df_input)
@@ -87,27 +87,27 @@ def do_transform(df_rating: DataFrame, df_merged_input: DataFrame) -> DataFrame:
     :return: the resulting dataframe
     """
     # For each { legal_entity, counter_party } pair with status=ARAP, compute the respective sum of the values.
-    df_arap = compute_value_sums(df_merged_input, STATUS_ARAP, COL_VALUE_FOR_ARAP)
+    df_arap = compute_value_sums(df_merged_input, STATUS_ARAP, COL_ARAP_VALUE_SUMS)
 
     # For each { legal_entity, counter_party } pair with status=ACCR, compute the respective sum of the values.
-    df_accr = compute_value_sums(df_merged_input, STATUS_ACCR, COL_VALUE_FOR_ACCR)
+    df_accr = compute_value_sums(df_merged_input, STATUS_ACCR, COL_ACCR_VALUE_SUMS)
 
     # Merge the dataframe with the value sum aggregations
     df_merged_2 = df_arap.merge(df_accr, on=[COL_LEGAL_ENTITY, COL_COUNTER_PARTY], how="outer")
     df_merged_2.fillna(0, inplace=True)
     df_merged_2[COL_TIER] = df_merged_2[[COL_TIER_X, COL_TIER_Y]].max(axis=1)
     df_merged_2[COL_TIER] = df_merged_2[COL_TIER].astype("int32")
-    df_merged_2[COL_VALUE_FOR_ARAP] = df_merged_2[COL_VALUE_FOR_ARAP].astype("int32")
-    df_merged_2[COL_VALUE_FOR_ACCR] = df_merged_2[COL_VALUE_FOR_ACCR].astype("int32")
-    df_merged_2 = df_merged_2[[COL_LEGAL_ENTITY, COL_COUNTER_PARTY, COL_TIER, COL_VALUE_FOR_ARAP, COL_VALUE_FOR_ACCR]]
+    df_merged_2[COL_ARAP_VALUE_SUMS] = df_merged_2[COL_ARAP_VALUE_SUMS].astype("int32")
+    df_merged_2[COL_ACCR_VALUE_SUMS] = df_merged_2[COL_ACCR_VALUE_SUMS].astype("int32")
+    df_merged_2 = df_merged_2[[COL_LEGAL_ENTITY, COL_COUNTER_PARTY, COL_TIER, COL_ARAP_VALUE_SUMS, COL_ACCR_VALUE_SUMS]]
 
     # Merge the max rating dataset with the value sum aggregations dataframe
     df_merged_3 = df_rating.merge(df_merged_2, on=[COL_LEGAL_ENTITY, COL_COUNTER_PARTY], how="outer")
     # Reconcile tier vs. tier_x/tier_y.
     df_merged_3[COL_TIER] = df_merged_3[COL_TIER_X]
     df_merged_3 = df_merged_3[
-        [COL_LEGAL_ENTITY, COL_COUNTER_PARTY, COL_TIER, COL_MAX_RATING_BY_COUNTERPARTY, COL_VALUE_FOR_ARAP,
-         COL_VALUE_FOR_ACCR]]
+        [COL_LEGAL_ENTITY, COL_COUNTER_PARTY, COL_TIER, COL_MAX_RATING_BY_COUNTERPARTY, COL_ARAP_VALUE_SUMS,
+         COL_ACCR_VALUE_SUMS]]
 
     # df_merged_3 = df_merged_3.sort_values([COL_LEGAL_ENTITY, COL_COUNTER_PARTY, COL_TIER]).reset_index(drop=True)
 
@@ -122,19 +122,19 @@ def compute_value_sums_2(df: DataFrame) -> DataFrame:
     """
     df = df.drop([COL_RATING], axis=1)
 
-    df[COL_VALUE_FOR_ACCR] = df[df.status == STATUS_ACCR].groupby([COL_LEGAL_ENTITY, COL_COUNTER_PARTY, COL_STATUS])[
+    df[COL_ACCR_VALUE_SUMS] = df[df.status == STATUS_ACCR].groupby([COL_LEGAL_ENTITY, COL_COUNTER_PARTY, COL_STATUS])[
         COL_VALUE].transform("sum")
-    df[COL_VALUE_FOR_ARAP] = df[df.status == STATUS_ARAP].groupby([COL_LEGAL_ENTITY, COL_COUNTER_PARTY, COL_STATUS])[
+    df[COL_ARAP_VALUE_SUMS] = df[df.status == STATUS_ARAP].groupby([COL_LEGAL_ENTITY, COL_COUNTER_PARTY, COL_STATUS])[
         COL_VALUE].transform("sum")
     df = df.drop([COL_VALUE, COL_STATUS], axis=1)
     df.fillna(0, inplace=True)
     df = df.drop_duplicates()
 
-    df[COL_VALUE_FOR_ACCR] = df.groupby([COL_LEGAL_ENTITY, COL_COUNTER_PARTY])[COL_VALUE_FOR_ACCR].transform("sum")
-    df[COL_VALUE_FOR_ARAP] = df.groupby([COL_LEGAL_ENTITY, COL_COUNTER_PARTY])[COL_VALUE_FOR_ARAP].transform("sum")
+    df[COL_ACCR_VALUE_SUMS] = df.groupby([COL_LEGAL_ENTITY, COL_COUNTER_PARTY])[COL_ACCR_VALUE_SUMS].transform("sum")
+    df[COL_ARAP_VALUE_SUMS] = df.groupby([COL_LEGAL_ENTITY, COL_COUNTER_PARTY])[COL_ARAP_VALUE_SUMS].transform("sum")
     df = df.drop_duplicates()
-    df[COL_VALUE_FOR_ACCR] = df[COL_VALUE_FOR_ACCR].astype("int32")
-    df[COL_VALUE_FOR_ARAP] = df[COL_VALUE_FOR_ARAP].astype("int32")
+    df[COL_ACCR_VALUE_SUMS] = df[COL_ACCR_VALUE_SUMS].astype("int32")
+    df[COL_ARAP_VALUE_SUMS] = df[COL_ARAP_VALUE_SUMS].astype("int32")
 
     return df
 
@@ -168,6 +168,14 @@ def persist_results(df: DataFrame) -> None:
 
 
 if __name__ == "__main__":
+    """ This generates the output CSV file for the main requirement which is the output with the following columns:
+    legal_entity,
+    counterparty,
+    tier,
+    max(rating by counterparty),
+    sum(value where status=ARAP),
+    sum(value where status=ACCR)
+    """
     df = load_dataset(INPUT_FILE_1_PATH, INPUT_FILE_2_PATH)
     print(">> Loaded the input dataset.")
 
@@ -178,6 +186,6 @@ if __name__ == "__main__":
     print(">> Saved results to {}".format(OUTPUT_FILE_PATH))
 
     # TODO DG: convert to a unit test using unittest.TestCase
-    validate(EXPECTED_RESULTS_FILE_PATH, EXPECTED_RESULTS_FILE_PATH)
+    validate(EXPECTED_RESULTS_FILE_PATH, OUTPUT_FILE_PATH)
 
     print(">> Done.")
