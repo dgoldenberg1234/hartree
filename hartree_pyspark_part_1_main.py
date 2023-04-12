@@ -26,7 +26,7 @@ from hartree_common import (
 
 INPUT_FILE_1_PATH = "input/dataset1.csv"
 INPUT_FILE_2_PATH = "input/dataset2.csv"
-OUTPUT_DIR_PATH = "pyspark_output"
+OUTPUT_DIR_PATH = "pyspark_output_main"
 OUTPUT_FNAME = "part_1_result.csv"
 
 EXPECTED_RESULTS_FILE_PATH = "expected/expected_part_1_result.csv"
