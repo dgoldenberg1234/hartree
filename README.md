@@ -25,6 +25,9 @@ which one is more performant based on testing on a larger dataset and pick the m
 6. requirements.txt - standard python requirements file with dependency library versions.
 7. input - this directory contains the input CSV files.
 8. expected - this directory contains the expected outputs for Pandas and PySpark so that validations can be performed.
+9. pandas_results - contains examples of results generated via Pandas (both main and cube).
+10. pyspark_results_main - contains examples of results generated via PySpark.
+11. pyspark_results_cube - ontains examples of the cube generated via PySpark.
 
 
 ### The challenge description
