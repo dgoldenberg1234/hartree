@@ -24,7 +24,7 @@ OUTPUT_COL_ORDER = [COL_LEGAL_ENTITY, COL_COUNTER_PARTY, COL_TIER, COL_MAX_RATIN
 # TODO DG: these can be externalized e.g. passed in from the command line
 INPUT_FILE_1_PATH = "input/dataset1.csv"
 INPUT_FILE_2_PATH = "input/dataset2.csv"
-OUTPUT_FILE_PATH = "pandas_output/part_1_result.csv"
+OUTPUT_FILE_PATH = "pandas_results/part_1_result.csv"
 
 EXPECTED_RESULTS_FILE_PATH = "expected/expected_part_1_result.csv"
 

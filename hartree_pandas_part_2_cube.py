@@ -18,8 +18,8 @@ from hartree_common import (
 )
 from hartree_common import load_df, set_df_debug
 
-INPUT_FILE_PATH = "pandas_output/part_1_result.csv"
-OUTPUT_FILE_PATH = "pandas_output/part_2_result_cube.csv"
+INPUT_FILE_PATH = "pandas_results/part_1_result.csv"
+OUTPUT_FILE_PATH = "pandas_results/part_2_result_cube.csv"
 EXPECTED_RESULTS_FILE_PATH = "expected/expected_part_2_result_cube.csv"
 
 COLS_TO_CUBE = [

@@ -20,7 +20,7 @@ from hartree_common import (
     validate
 )
 
-INPUT_FILE_PATH = "pyspark_output_main/part_1_result.csv"
+INPUT_FILE_PATH = "pyspark_results_main/part_1_result.csv"
 
 # The tier is not relevant because it is set to the given { legal_entity, counter_party } pair.
 COLS_TO_CUBE = [
@@ -32,7 +32,7 @@ COLS_TO_CUBE = [
     COL_ACCR_VALUE_SUMS,
 ]
 
-OUTPUT_DIR_PATH = "pyspark_output_cube"
+OUTPUT_DIR_PATH = "pyspark_results_cube"
 OUTPUT_FNAME = "part_1_result_cube_pyspark.csv"
 
 EXPECTED_RESULTS_FILE_PATH = "expected/expected_part_2_result_cube.csv"
